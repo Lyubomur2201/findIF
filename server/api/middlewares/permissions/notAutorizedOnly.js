@@ -1,5 +1,5 @@
 module.exports = (req, res, next) => {
-    if(req.user === 'Anonimous'){
+    if(!req.user){
         next();
     } else{
         return res.status(400).json({

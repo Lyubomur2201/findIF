@@ -2,12 +2,12 @@ const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const passport = require('passport');
 
 const authRouts = require('./api/routers/auth');
 const userRouts = require('./api/routers/user');
 const postRouts = require('./api/routers/post')
-
-const userMiddleware = require('./api/middlewares/auth');
+const authMiddleware = require('./api/middlewares/auth');
 
 const app = express();
 
@@ -17,7 +17,8 @@ mongoose.set('useCreateIndex', true);
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-app.use(userMiddleware);
+app.use(passport.initialize())
+// app.use(passport.authenticate('jwt', { session: false }));
 
 app.use((req, res, next) => {
     res.header('Acess-Control-Allow-Origin', '*');

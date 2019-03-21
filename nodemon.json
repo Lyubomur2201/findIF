@@ -1,7 +1,0 @@
-{
-    "env": {
-        "MONGODB_ATLAS_PSW": "toor",
-        "STATIC_PATH": "static",
-        "JWT_SECRET": "secret"
-    }
-}

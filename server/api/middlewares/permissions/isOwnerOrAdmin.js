@@ -1,7 +1,7 @@
 const Post = require('../../models/post');
 
 module.exports = async (req, res, next) => {
-    if(req.user === 'Anonimous'){
+    if(!req.user){
         return res.status(405).json({
             message: 'Access denied'
         })
