@@ -7,7 +7,6 @@ const passport = require('passport');
 const authRouts = require('./api/routers/auth');
 const userRouts = require('./api/routers/user');
 const postRouts = require('./api/routers/post')
-const authMiddleware = require('./api/middlewares/auth');
 
 const app = express();
 
@@ -18,7 +17,6 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(passport.initialize())
-// app.use(passport.authenticate('jwt', { session: false }));
 
 app.use((req, res, next) => {
     res.header('Acess-Control-Allow-Origin', '*');
@@ -31,7 +29,16 @@ app.use((req, res, next) => {
     }
     next();
 });
-
+app.use('/static', express.static(process.env.STATIC_PATH))
+app.use((req, res, next) => {
+    try {
+        next();
+    } catch(err) {
+        res.status(500).json({
+            error: err
+        });
+    }
+})
 app.use('/auth', authRouts);
 app.use('/user', userRouts);
 app.use('/post', postRouts)
@@ -42,8 +49,7 @@ app.use((req, res, next) => {
     next(error);
 });
 app.use((error, req, res, next) => {
-    res.status(error.status || 500);
-    res.json({
+    res.status(error.status || 500).json({
         error: {
             message: error.message
         }

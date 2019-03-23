@@ -1,128 +1,112 @@
 const mongoose = require('mongoose');
+const fs = require('fs')
 const Post = require('../models/post');
 
-module.exports.getPosts = (req, res, next) => {
-    Post.find()
-    .exec()
-    .then(posts => {           
-        res.status(200).json({
-            count: posts.length,
-            posts: posts.map(post => {
-                return {
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    date: post.date,
-                    user: {
-                        id: post.user,
-                        url: 'http://127.0.0.1:3030/user/' + post.user,
-                    },
-                    url: 'http://127.0.0.1:3030/post/' + post.id,
-                };
-            })
-        });
-    })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        });
-    });
-};
+module.exports.getPosts = async (req, res, next) => {
+    const posts = await  Post.find();
 
-module.exports.getPostById = (req, res, next) => {
-    const post = Post.findById(req.params.id)
-    .exec()
-    .then(post => {
-        if(post){
-            res.status(200).json({
-                post: {
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    date: post.date,
-                    user: {
-                        id: post.user,
-                        url: 'http://127.0.0.1:3030/user/' + post.user,
-                    },
-                }
-            });
-        } else {
-            return res.status(404).json({
-                message: 'Post not found'
-            });
-        }
-    })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        });
-    });
-};
-
-module.exports.makePost = (req, res, next) => {
-    const post = Post({
-        _id: new mongoose.Types.ObjectId(),
-        user: req.user.id,
-        title: req.body.title,
-        content: req.body.content,
-        date: new Date()
-    });
-    post.save()
-    .then(post => {
-        return res.status(201).json({
-            message: 'Post maded',
-            post: {
-                _id: post._id,
+    return res.status(200).json({
+        count: posts.length,
+        posts: posts.map(post => {
+            return {
+                id: post.id,
                 title: post.title,
                 content: post.content,
+                files: [post.files.map(file => {
+                    return {
+                        filename: file,
+                        url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                    }
+                })],
                 date: post.date,
                 user: {
                     id: post.user,
                     url: 'http://127.0.0.1:3030/user/' + post.user,
                 },
-            },   
-        });
-    })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        });
+                url: 'http://127.0.0.1:3030/post/' + post.id,
+            };
+        })
     });
 };
 
-module.exports.updatePost = (req, res, next) => {
+module.exports.getPostById = async (req, res, next) => {
+    const post = await Post.findById(req.params.id);
 
-    Post.findByIdAndUpdate(req.params.id, { $set: req.body })
-    .exec()
-    .then(result => {        
-        return res.status(200).json({
-            message: 'Post updated',
+    if(post){
+        res.status(200).json({
             post: {
-                id: result.id,
-                title: result.title,
-                content: result.content,
-                date: result.date,
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                files: [post.files.map(file => {
+                    return {
+                        filename: file,
+                        url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                    }
+                })],
+                date: post.date,
                 user: {
-                    id: result.user,
-                    url: 'http://127.0.0.1:3030/user/' + result.user,
+                    id: post.user,
+                    url: 'http://127.0.0.1:3030/user/' + post.user,
                 },
-            },   
+            }
         });
-    })
-    .catch(err => {
-        res.status(500).json(err);
+    } else {
+        return res.status(404).json({
+            message: 'Post not found'
+        });
+    }
+};
+
+module.exports.makePost = async (req, res, next) => {
+    
+    const post = await Post({
+        _id: new mongoose.Types.ObjectId(),
+        user: req.user.id,
+        title: req.body.title,
+        content: req.body.content,
+        files: req.files.map(file => {
+            return file.filename
+        }),
+        date: new Date()
+    });
+    await post.save();
+    return res.status(201).json({
+        message: 'Post maded',
+        post: {
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            date: post.date,
+            files: post.files.map(file => {
+                return {
+                    filemanne: file,
+                    url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                }
+            }),
+            user: {
+                id: post.user,
+                url: 'http://127.0.0.1:3030/user/' + post.user,
+            },
+            url: 'http://127.0.0.1:3030/post/' + post.id
+        },   
     });
 };
 
-module.exports.deletePosts = (req, res, next) => {
-    Post.findByIdAndDelete(req.params.id)
-    .exec()
-    .then(result => {
-        return res.status(200).json({
-            message: 'Post was delited'
-        });
+module.exports.updatePost = async (req, res, next) => {
+
+    await Post.findByIdAndUpdate(req.params.id, { $set: req.body })
+    return res.status(200).json({
+        message: 'Post updated',
+    });
+};
+
+module.exports.deletePosts = async (req, res, next) => {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    post.files.map(file => {
+        fs.unlinkSync(process.env.STATIC_PATH + 'media/images/post/' + file)
     })
-    .catch(err => {
-        res.status(500).json(err);
+    return res.status(200).json({
+        message: 'Post was delited'
     });
 };

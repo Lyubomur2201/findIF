@@ -1,163 +1,118 @@
 const User = require('../models/user');
 const Post = require('../models/post');
 
-module.exports.getAllUsers = (req, res, next) => {
-    User.find()
-    .exec()
-    .then(users => {        
+module.exports.getAllUsers = async (req, res, next) => {
+    const users = await User.find();      
+    return res.status(200).json({
+        count: users.length,
+        users: users.map(user => {
+            return {
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                surname: user.surname,
+                email: user.local.email || user.google.email || user.facebook.email,
+                phone: user.phone,
+                facebook: user.facebook.link,
+                instagram: user.instagram, 
+                url: 'http://127.0.0.1:3030/user/' + user.id,
+            };
+        })
+    });
+};
+
+module.exports.getMyUser = async (req, res, next) => {
+
+    const user = await {
+        id: req.user.id,
+        username: req.user.username,
+        name: req.user.name,
+        surname: req.user.surname,
+        email: req.user.local.email,
+        phone: req.user.phone,
+        facebook: req.user.facebook.link,
+        instagram: req.user.instagram, 
+    };
+
+    if(req.query.posts === 'true'){
+        let posts = await Post.find({user: req.user.id})
         return res.status(200).json({
-            count: users.length,
-            users: users.map(user => {
+            user: user,
+            posts: posts.map(post => {
                 return {
-                    id: user.id,
-                    username: user.username,
-                    name: user.name,
-                    surname: user.surname,
-                    email: user.email,
-                    phone: user.phone,
-                    fb: user.fb,
-                    instagram: user.instagram, 
-                    url: 'http://127.0.0.1:3030/user/' + user.id,
-                };
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                    files: [post.files.map(file => {
+                        return {
+                            filename: file,
+                            url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                        }
+                    })],
+                    date: post.date,
+                    url: 'http://127.0.0.1:3030/post/' + post.id,
+                }
             })
         });
-    })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        });
-    });
-};
-
-module.exports.getMyUser = (req, res, next) => {
-    if(req.query.posts === 'true'){
-        Post.find({user: req.user.id})
-        .exec()    
-        .then(posts => {
-            return res.status(200).json({
-                user: {
-                    _id: req.user.id,
-                    username: req.user.username,
-                    name: req.user.name,
-                    surname: req.user.surname,
-                    email: req.user.email,
-                    phone: req.user.phone,
-                    fb: req.user.fb,
-                    instagram: req.user.instagram,
-                },
-                posts: posts.map(post => {
-                    return {
-                        id: post.id,
-                        title: post.title,
-                        date: post.date,
-                        content: post.content,
-                        url: 'http://127.0.0.1:3030/post/' + post.id,
-                    }
-                }),
-            });
-        })
-        .catch(err => {
-            res.status(500).json({
-                error: err
-            });
-        });
     } else {
-        res.status(200).json({
-            user:  {
-                id: req.user.id,
-                username: req.user.username,
-                name: req.user.name,
-                surname: req.user.surname,
-                email: req.user.email,
-                phone: req.user.phone,
-                fb: req.user.fb,
-                instagram: req.user.instagram,
-            }
-        });
-    }
-}
-
-module.exports.updateMyUser = (req, res, next) => {
-    User.findByIdAndUpdate(req.user.id, { $set: req.body })
-    .exec()
-    .then(result => {        
-        return res.status(200).json({
-            message: 'User updated',
-            user: {
-                id: result.id,
-                username: result.username,
-                name: result.name,
-                surname: result.surname,
-                email: result.email,
-                phone: result.phone,
-                fb: result.fb,
-                instagram: result.instagram,
-            },   
-        });
-    })
-    .catch(err => {        
-        res.status(500).json({
-            error: err
-        });
-    });
+        res.status(200).json({ user: user });
+    };
 };
 
-module.exports.deleteMyUser = (req, res ,next) => {
-    User.findByIdAndDelete(req.user.id)
-    .exec()
-    .then(result => {
-        return res.status(200).json({
-            message: 'User was delited'
-        });
-    })
-    .catch(err => {
-        res.status(500).json(err);
+module.exports.updateMyUser = async (req, res, next) => {
+
+    await User.findByIdAndUpdate(req.user.id, { $set: req.body })
+    return res.status(200).json({
+        message: 'User updated',
     });
+
+};
+
+module.exports.deleteMyUser = async (req, res ,next) => {
+
+    await User.findByIdAndDelete(req.user.id)
+    return res.status(200).json({
+        message: 'User was delited'
+    });
+
 };
 
 module.exports.getUserById = async (req, res, next) => {
-    const user = await User.findById(req.params.id)
-    .exec()
-    .then(user => {
+
+    const user = await User.findById(req.params.id).exec()
+    .then(user => { 
         return {
             id: user.id,
             username: user.username,
             name: user.name,
             surname: user.surname,
-            email: user.email,
+            email: user.local.email,
             phone: user.phone,
-            fb: user.fb,
-            instagram: user.instagram,
+            facebook: user.facebook.link,
+            instagram: user.instagram, 
         };
-    })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        });
     });
-
     if(req.query.posts === 'true'){
-        Post.find({user: user.id})
-        .exec()    
-        .then(posts => {            
-            return res.status(200).json({
-                user: user,
-                posts: posts.map(post => {
-                    return {
-                        id: post.id,
-                        title: post.title,
-                        content: post.content,
-                        date: post.date,
-                        url: 'http://127.0.0.1:3030/post/' + post.id,
-                    }
-                }),
-            });
-        })
-        .catch(err => {
-            res.status(500).json({
-                error: err
-            });
+        const posts = await Post.find({user: user.id})
+        return res.status(200).json({
+            user: user,
+            posts: posts.map(post => {
+                return {
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                    files: [post.files.map(file => {
+                        return {
+                            filename: file,
+                            url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                        }
+                    })],
+                    date: post.date,
+                    url: 'http://127.0.0.1:3030/post/' + post.id,
+                }
+            }),
         });
+
     } else {
         res.status(200).json({
             user: user

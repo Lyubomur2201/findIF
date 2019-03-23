@@ -6,6 +6,7 @@ const UserSchema = mongoose.Schema({
     username: { type: String, required: true },
     name: { type: String },
     surname: { type: String },
+    avatar: { type: String },
     local: {
         email: { 
             type: String,
@@ -22,6 +23,7 @@ const UserSchema = mongoose.Schema({
     phone: { type: String },
     facebook: { 
         id: { type: String },
+        link: { type: String },
         email: { 
             type: String,
         },

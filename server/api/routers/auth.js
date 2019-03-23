@@ -1,12 +1,39 @@
 const express = require('express');
+const passport = require('passport');
+const multer = require('multer');
+
 const authControler = require('../controlers/authControler');
 const validator = require('../helpers/validators');
-const passport = require('passport');
-const router = express.Router();
 const passportConf = require('../../passport');
 
-router.post('/registration', 
-    validator.validate(validator.userSchema), 
+const router = express.Router();
+
+const fileFilter = (req, file, cb) => {
+    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+        cb(null, true);
+    } else {
+        
+        var err = new Error('Unsupported media type');
+        err.status = 415;
+        cb(err, false);
+    }
+
+}
+
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, process.env.STATIC_PATH + 'media/images/user')
+    },
+    filename: function(req, file, cb) {
+        cb(null, new Date().toISOString() + '___' + file.originalname)
+    }
+});
+const upload =  multer({storage: storage, fileFilter: fileFilter})
+
+
+router.post('/registration',
+    upload.single('avatar'),
+    validator.validate(validator.userSchema),
     authControler.registration
 );
 
