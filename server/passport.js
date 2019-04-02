@@ -31,7 +31,6 @@ passport.use('google', new GoogleStrategy({
     clientSecret: process.env.GOOGLE_OAUTH_SECRET,
     callbackURL: "http://localhost:3030/auth/google/redirect",
 }, async (accessToken, refreshToken, profile, done) => {
-    console.log(profile);
     
     try {        
         const match = await User.findOne({ 'google.id': profile.id });

@@ -1,9 +1,10 @@
 const express = require('express');
 const passport = require('passport');
-const router = express.Router();
 const userControler = require('../controlers/userControler');
 const authorizedOnly = require('../middlewares/permissions/authorizedOnly')
 const passportConf = require('../../passport');
+
+const router = express.Router();
 
 router.get('/', userControler.getAllUsers);
 

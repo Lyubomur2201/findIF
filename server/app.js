@@ -4,9 +4,12 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
-const authRouts = require('./api/routers/auth');
-const userRouts = require('./api/routers/user');
-const postRouts = require('./api/routers/post')
+const authRouts = require('./api/router/auth');
+const userRouts = require('./api/router/user');
+const postRouts = require('./api/router/post')
+
+const homeRouts = require('./views/routes/home');
+const adminRouts = require('./views/routes/admin');
 
 const app = express();
 
@@ -24,7 +27,7 @@ app.use((req, res, next) => {
     'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     
     if (req.method == 'OPTIONS'){
-        res.header('Acess-Control-Allow-Headers', 'GET, PUT, PATCH, POST, DELETE');
+        res.header('Acess-Control-Allow-Headers', 'GET, PATCH, POST, DELETE');
         return res.status(200).json({});
     }
     next();
@@ -38,11 +41,14 @@ app.use((req, res, next) => {
             error: err
         });
     }
-})
+});
+app.use('/', homeRouts);
+app.use('/home', homeRouts);
 app.use('/auth', authRouts);
-app.use('/user', userRouts);
-app.use('/post', postRouts)
+app.use('/api/user', userRouts);
+app.use('/api//post', postRouts);
 
+app.use('/admin', adminRouts);
 app.use((req, res, next) => {
     const error = new Error('Page not found');
     error.status = 404;

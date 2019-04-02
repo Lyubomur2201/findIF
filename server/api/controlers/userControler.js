@@ -2,7 +2,9 @@ const User = require('../models/user');
 const Post = require('../models/post');
 
 module.exports.getAllUsers = async (req, res, next) => {
-    const users = await User.find();      
+
+    const users = await User.find();
+
     return res.status(200).json({
         count: users.length,
         users: users.map(user => {
@@ -15,7 +17,7 @@ module.exports.getAllUsers = async (req, res, next) => {
                 phone: user.phone,
                 facebook: user.facebook.link,
                 instagram: user.instagram, 
-                url: 'http://127.0.0.1:3030/user/' + user.id,
+                url: 'http://localhost:3030/user/' + user.id,
             };
         })
     });
@@ -46,11 +48,11 @@ module.exports.getMyUser = async (req, res, next) => {
                     files: [post.files.map(file => {
                         return {
                             filename: file,
-                            url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                            url: 'http://localhost:3030/static/media/images/post/' + file
                         }
                     })],
                     date: post.date,
-                    url: 'http://127.0.0.1:3030/post/' + post.id,
+                    url: 'http://localhost:3030/post/' + post.id,
                 }
             })
         });
@@ -92,6 +94,7 @@ module.exports.getUserById = async (req, res, next) => {
             instagram: user.instagram, 
         };
     });
+    
     if(req.query.posts === 'true'){
         const posts = await Post.find({user: user.id})
         return res.status(200).json({
@@ -104,15 +107,14 @@ module.exports.getUserById = async (req, res, next) => {
                     files: [post.files.map(file => {
                         return {
                             filename: file,
-                            url: 'http://127.0.0.1:3030/static/media/images/post/' + file
+                            url: 'http://localhost:3030/static/media/images/post/' + file
                         }
                     })],
                     date: post.date,
-                    url: 'http://127.0.0.1:3030/post/' + post.id,
+                    url: 'http://localhost:3030/post/' + post.id,
                 }
             }),
         });
-
     } else {
         res.status(200).json({
             user: user
